@@ -10,6 +10,8 @@ module gtm.hibernateapp {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires java.desktop;
+    requires jakarta.persistence;
 
     opens gtm.hibernateapp to javafx.fxml;
     exports gtm.hibernateapp;
