@@ -1,5 +1,6 @@
 package gtm.hibernateapp;
 
+import gtm.hibernateapp.entities.Group;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -74,7 +75,9 @@ public class AddGroupWindow {
                 return;
             }
 
-            Group group = new Group(name_of_group, max_occupancy);
+            Group group = new Group();
+            group.setName_of_group(name_of_group);
+            group.setMax_occupancy(max_occupancy);
 
             callback.accept(group);
 
