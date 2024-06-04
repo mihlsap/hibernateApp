@@ -14,6 +14,7 @@ module gtm.hibernateapp {
     requires com.zaxxer.hikari;
     requires org.hibernate.orm.core;
     requires org.slf4j;
+    requires jdk.jfr;
 
     opens gtm.hibernateapp to javafx.fxml;
     exports gtm.hibernateapp;

@@ -1,5 +1,6 @@
 package gtm.hibernateapp;
 
+import gtm.hibernateapp.entities.Teacher;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -202,7 +203,15 @@ public class ModifyTeacherWindow {
             String phone_number = phone_number_field.getText();
             String email = email_field.getText();
 
-            Teacher teacher = new Teacher(name, surname, condition, birth_year, salary, phone_number, email);
+            Teacher teacher = new Teacher();
+            teacher.setName(name);
+            teacher.setSurname(surname);
+            teacher.setCondition(condition);
+            teacher.setBirth_year(birth_year);
+            teacher.setPhone_number(phone_number);
+            teacher.setEmail(email);
+            teacher.setSalary(salary);
+
             callback.accept(teacher);
             window.close();
         });

@@ -13,3 +13,7 @@
     -fx-background-color: darkcyan;
     -fx-text-fill: white;
 }
+.rate_buttons{
+    -fx-background-color: darkblue;
+    -fx-text-fill: white;
+}

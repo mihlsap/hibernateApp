@@ -14,10 +14,9 @@ public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-
     String name_of_group;
     int max_occupancy;
-    String occupancy = "0.0%";
+    String occupancy;
     int number_of_rates;
     double average_rate;
 
@@ -27,6 +26,10 @@ public class Group {
 
     public void setOccupancy(String occupancy) {
         this.occupancy = occupancy;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getId() {
@@ -63,6 +66,7 @@ public class Group {
         }
         finally {
             entityManager.close();
+            entityManagerFactory.close();
         }
 
         return teachers;
@@ -76,12 +80,13 @@ public class Group {
         try {
             entityManager.getTransaction().begin();
 
-            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r.value from Rate r where r.group.id = :number", Rate.class);
+            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r where r.group.id = :number", Rate.class);
             rateTypedQuery.setParameter("number", getId());
             rates = rateTypedQuery.getResultList();
         }
         finally {
             entityManager.close();
+            entityManagerFactory.close();
         }
 
         return rates;
@@ -100,7 +105,7 @@ public class Group {
 
     public void calculate_occupancy() {
         List<Teacher> teachers = getTeachers();
-        occupancy = teachers.size() / max_occupancy + " %";
+        occupancy = (double) teachers.size() / (double) max_occupancy * 100 + " %";
     }
 
     @Override

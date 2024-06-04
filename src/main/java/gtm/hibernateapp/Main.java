@@ -1,42 +1,63 @@
 package gtm.hibernateapp;
 
+import gtm.hibernateapp.entities.*;
+import gtm.hibernateapp.persistence.CustomPersistenceUnitInfo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import jakarta.persistence.TypedQuery;
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.control.*;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class Main extends Application {
 
-    EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("persistence");
+    EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
+            CustomPersistenceUnitInfo(), new HashMap<>());
 
-    EntityManager entityManager = entityManagerFactory.createEntityManager();
-
-    Button add_group_button, add_teacher_button, delete_group_button, delete_teacher_button, modify_group_data_button,
-            modify_teachers_data_button;
+    Button add_group_button, delete_group_button, modify_group_data_button;
     Stage window;
     Scene scene;
     ObservableList<Group> groups = FXCollections.observableArrayList();
     TableView<Group> groupTableView = new TableView<>(groups);
-    TableView<Teacher> teacherTableView;
+
+    public void getGroups () {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+
+        TypedQuery<Group> groupTypedQuery = entityManager.createQuery("select g from Group g", Group.class);
+        List<Group> resultList = groupTypedQuery.getResultList();
+
+        for (Group group : resultList) {
+            group.calculate_occupancy();
+            group.calculate_average_rate();
+            Group managedGroup = entityManager.find(Group.class, group.getId());
+            group.setId(managedGroup.getId());
+            entityManager.merge(group);
+        }
+
+        groups.clear();
+        groups.addAll(resultList);
+
+        entityManager.close();
+    }
 
     public static void main(String[] args){ launch(); }
 
@@ -47,13 +68,16 @@ public class Main extends Application {
         window.setResizable(false);
         window.setFullScreen(false);
 
+        getGroups();
 
-
-        entityManager.getTransaction().begin();
-
-        entityManager.getTransaction().commit();
-
-        entityManager.close();
+//            // persist -> add data to the context
+//            // find -> get data from the database to the context
+//            // getReference -> get data from the database to the context ONLY when it is used afterwards
+//            // remove -> mark data for removal from the database
+//            // refresh -> reverts changes made to the object in the context by getting the data from the database and assigning it to the object
+//            // merge -> update object in the table after altering it in the context
+//            // detach -> remove data from the context, but not from database if it already exists there
+//            // flush -> mirror the context in the database, not waiting for commit
 
 
         String message = "Are you sure you want to continue?";
@@ -62,6 +86,7 @@ public class Main extends Application {
             Toolkit.getDefaultToolkit().beep();
             if (!ConfirmationWindow.display(message))
                 windowEvent.consume();
+            entityManagerFactory.close();
         });
 
         BorderPane borderPane = new BorderPane();
@@ -77,60 +102,31 @@ public class Main extends Application {
         occupancy_column.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOccupancy()));
 
         TableColumn<Group, Integer> maximum_occupancy_column = new TableColumn<>("Maximum occupancy");
-        maximum_occupancy_column.setMinWidth(150);
+        maximum_occupancy_column.setMinWidth(120);
         maximum_occupancy_column.setCellValueFactory(new PropertyValueFactory<>("max_occupancy"));
-        groupTableView.getColumns().addAll(group_name_column, occupancy_column, maximum_occupancy_column);
+
+        TableColumn<Group, Double> average_rate_column = new TableColumn<>("Average Rate");
+        average_rate_column.setMinWidth(120);
+        average_rate_column.setCellValueFactory(new PropertyValueFactory<>("average_rate"));
+
+        groupTableView.getColumns().addAll(group_name_column, occupancy_column, maximum_occupancy_column, average_rate_column);
 
         groupTableView.setItems(groups);
-
-        teacherTableView = new TableView<>();
-
-        TableColumn<Teacher, String> name_column = new TableColumn<>("Name");
-        name_column.setMinWidth(120);
-        name_column.setCellValueFactory(new PropertyValueFactory<>("name"));
-
-        TableColumn<Teacher, String> surname_column = new TableColumn<>("Surname");
-        surname_column.setMinWidth(120);
-        surname_column.setCellValueFactory(new PropertyValueFactory<>("surname"));
-
-        TableColumn<Teacher, TeacherCondition> condition_column = new TableColumn<>("Condition");
-        condition_column.setMinWidth(120);
-        condition_column.setCellValueFactory(new PropertyValueFactory<>("condition"));
-
-        TableColumn<Teacher, Integer> birth_year_column = new TableColumn<>("Birth year");
-        birth_year_column.setMinWidth(120);
-        birth_year_column.setCellValueFactory(new PropertyValueFactory<>("birth_year"));
-
-        TableColumn<Teacher, Double> salary_column = new TableColumn<>("Salary");
-        salary_column.setMinWidth(120);
-        salary_column.setCellValueFactory(new PropertyValueFactory<>("salary"));
-
-        TableColumn<Teacher, String> phone_number_column = new TableColumn<>("Phone number");
-        phone_number_column.setMinWidth(120);
-        phone_number_column.setCellValueFactory(new PropertyValueFactory<>("phone_number"));
-
-        TableColumn<Teacher, String> email_column = new TableColumn<>("Email");
-        email_column.setMinWidth(120);
-        email_column.setCellValueFactory(new PropertyValueFactory<>("email"));
-
-        teacherTableView.getColumns().addAll(name_column, surname_column, condition_column, birth_year_column,
-                salary_column, phone_number_column, email_column);
 
         add_group_button = new Button();
         add_group_button.setText("Add group");
         add_group_button.getStyleClass().add("groups_buttons");
-        add_group_button.setOnAction(actionEvent -> AddGroupWindow.display(group -> groups.add(group)));
+        add_group_button.setOnAction(actionEvent -> AddGroupWindow.display(group -> {
+            EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        add_teacher_button = new Button();
-        add_teacher_button.setText("Add teacher");
-        add_teacher_button.getStyleClass().add("teachers_buttons");
-        add_teacher_button.setDisable(true);
-        add_teacher_button.fire();
+            entityManager.getTransaction().begin();
+            entityManager.persist(group);
+            entityManager.getTransaction().commit();
+            entityManager.close();
 
-        delete_teacher_button = new Button();
-        delete_teacher_button.setText("Delete teacher");
-        delete_teacher_button.getStyleClass().add("teachers_buttons");
-        delete_teacher_button.setDisable(true);
+            getGroups();
+            groupTableView.refresh();
+        }));
 
         delete_group_button = new Button();
         delete_group_button.setText("Delete group");
@@ -142,58 +138,68 @@ public class Main extends Application {
         modify_group_data_button.getStyleClass().add("groups_buttons");
         modify_group_data_button.setDisable(true);
 
-        modify_teachers_data_button = new Button();
-        modify_teachers_data_button.setText("Modify teacher's data");
-        modify_teachers_data_button.getStyleClass().add("teachers_buttons");
-        modify_teachers_data_button.setDisable(true);
-
         groupTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                add_teacher_button.setDisable(false);
                 delete_group_button.setDisable(false);
                 modify_group_data_button.setDisable(false);
-                delete_teacher_button.setDisable(true);
-                modify_teachers_data_button.setDisable(true);
-                teacherTableView.setItems(newValue.getTeachersList());
             } else {
-                add_teacher_button.setDisable(true);
                 delete_group_button.setDisable(true);
                 modify_group_data_button.setDisable(true);
             }
         });
 
-        teacherTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            delete_teacher_button.setDisable(newValue == null);
-            modify_teachers_data_button.setDisable(newValue == null);
-        });
+        groupTableView.setRowFactory(tableView -> {
+            TableRow<Group> selectedGroup = new TableRow<>();
 
-        add_teacher_button.setOnAction(actionEvent -> {
-            Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
-            if (selectedGroup.getTeachersList().size() == selectedGroup.getMax_occupancy()) {
-                Toolkit.getDefaultToolkit().beep();
-                AlertWindow.display("Maximum occupancy of a group has been reached!");
-                actionEvent.consume();
-                return;
-            }
-            AddTeacherWindow.display(teacher -> {
-                selectedGroup.addTeacher(teacher);
-                groupTableView.refresh();
+            MenuItem teachersItem = new MenuItem("Manage teachers");
+            teachersItem.setOnAction(actionEvent -> {
+                if(selectedGroup != null) {
+                    TeacherTableView teacherTableView = new TeacherTableView();
+
+                    teacherTableView.display(selectedGroup.getItem());
+
+                    EntityManager entityManager = entityManagerFactory.createEntityManager();
+                    entityManager.getTransaction().begin();
+
+                    Group managedGroup = entityManager.find(Group.class, selectedGroup.getItem().getId());
+
+                    managedGroup.calculate_occupancy();
+                    System.out.println(managedGroup);
+
+                    entityManager.getTransaction().commit();
+                    entityManager.close();
+
+                    getGroups();
+                    groupTableView.refresh();
+                }
             });
-        });
 
-        delete_teacher_button.setOnAction(actionEvent -> {
-            Toolkit.getDefaultToolkit().beep();
-            if (!ConfirmationWindow.display(message)) {
-                actionEvent.consume();
-                return;
-            }
+            MenuItem ratesItem = new MenuItem("Manage rates");
+            ratesItem.setOnAction(actionEvent -> {
+                if(selectedGroup != null) {
+                    RateTableView rateTableView = new RateTableView();
+                    rateTableView.display(selectedGroup.getItem());
 
-            Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
-            if (selectedGroup != null) {
-                Teacher selectedTeacher = teacherTableView.getSelectionModel().getSelectedItem();
-                selectedGroup.removeTeacher(selectedTeacher);
-                groupTableView.refresh();
-            }
+                    EntityManager entityManager = entityManagerFactory.createEntityManager();
+                    entityManager.getTransaction().begin();
+
+                    Group managedGroup = entityManager.find(Group.class, selectedGroup.getItem().getId());
+
+                    managedGroup.calculate_occupancy();
+                    System.out.println(managedGroup);
+
+                    entityManager.getTransaction().commit();
+                    entityManager.close();
+
+                    getGroups();
+                    groupTableView.refresh();
+                }
+            });
+
+            ContextMenu contextMenu = new ContextMenu(teachersItem, ratesItem);
+
+            selectedGroup.contextMenuProperty().bind(Bindings.when(selectedGroup.emptyProperty()).then((ContextMenu) null).otherwise(contextMenu));
+            return selectedGroup;
         });
 
         delete_group_button.setOnAction(actionEvent -> {
@@ -205,7 +211,13 @@ public class Main extends Application {
 
             Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
             if (selectedGroup != null) {
-                groups.remove(selectedGroup);
+                EntityManager entityManager = entityManagerFactory.createEntityManager();
+                entityManager.getTransaction().begin();
+                entityManager.remove(entityManager.find(Group.class, selectedGroup.getId()));
+                entityManager.getTransaction().commit();
+                entityManager.close();
+
+                getGroups();
                 groupTableView.refresh();
             }
         });
@@ -217,111 +229,41 @@ public class Main extends Application {
                 return;
             }
             Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
-            ModifyGroupWindow.display(selectedGroup,group -> {
-                groups.remove(selectedGroup);
-                group.setTeachersList(selectedGroup.getTeachersList());
-                group.calculateOccupancy();
-                groups.add(group);
-                groupTableView.refresh();
-            });
-        });
+            if(selectedGroup != null) {
+                ModifyGroupWindow.display(selectedGroup, group -> {
+                    EntityManager entityManager = entityManagerFactory.createEntityManager();
+                    entityManager.getTransaction().begin();
 
-        modify_teachers_data_button.setOnAction(actionEvent -> {
-            Toolkit.getDefaultToolkit().beep();
-            if (!ConfirmationWindow.display(message)) {
-                actionEvent.consume();
-                return;
+                    Group managedGroup = entityManager.find(Group.class, selectedGroup.getId());
+
+                    group.setId(managedGroup.getId());
+                    entityManager.merge(group);
+
+                    entityManager.getTransaction().commit();
+                    entityManager.close();
+
+                    getGroups();
+                    groupTableView.refresh();
+                });
             }
 
-            Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
-            Teacher selectedTeacher = teacherTableView.getSelectionModel().getSelectedItem();
-
-            ModifyTeacherWindow.display(selectedTeacher,teacher -> {
-                selectedGroup.getTeachersList().remove(selectedTeacher);
-                selectedGroup.getTeachersList().add(teacher);
-                teacherTableView.refresh();
-            });
         });
 
         borderPane.setPadding(new Insets(10, 10, 10, 10));
         borderPane.setLeft(groupTableView);
 
-//        Label groupsTableLabel = new Label("Groups table");
-//        groupsTableLabel.setFont(Font.font(18));
-//        Label teachersTableLabel = new Label("Teachers table");
-//        teachersTableLabel.setFont(Font.font(18));
-//
-//        HBox tablesLabels = new HBox(150);
-//        tablesLabels.getChildren().addAll(groupsTableLabel, teachersTableLabel);
-//        borderPane.setTop(tablesLabels);
-
         VBox vBox = new VBox(10);
 
         HBox buttonsHBox = new HBox(20);
-        buttonsHBox.getChildren().addAll(add_group_button, delete_group_button, modify_group_data_button, add_teacher_button,
-                delete_teacher_button, modify_teachers_data_button);
+        buttonsHBox.getChildren().addAll(add_group_button, delete_group_button, modify_group_data_button);
 
-        HBox searchHBox = new HBox(20);
-        Label searchLabel = new Label("Filter teacher's table contents:");
-
-        javafx.scene.control.TextField filterField = new TextField();
-        filterField.setPromptText("eg. John");
-//        filterField.setDisable(true);
-
-        filterField.textProperty().addListener((observable, oldValue, newValue) -> {
-            Group selectedGroup = groupTableView.getSelectionModel().getSelectedItem();
-//            if (!selectedGroup.getTeachersList().isEmpty())
-//                filterField.setDisable(false);
-            ObservableList<Teacher> teacherObservableList = selectedGroup.getTeachersList();
-            FilteredList<Teacher> filteredData = new FilteredList<>(teacherObservableList, p -> true);
-            filteredData.setPredicate(teacher -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-
-                String lowerCaseFilter = newValue.toLowerCase();
-
-                if (teacher.getName().toLowerCase().contains(lowerCaseFilter))
-                    return true;
-                else if (teacher.getSurname().toLowerCase().contains(lowerCaseFilter))
-                    return true;
-                else if (teacher.getCondition().toString().contains(lowerCaseFilter))
-                    return true;
-                else if (teacher.getEmail().contains(lowerCaseFilter))
-                    return true;
-                else if (Double.toString(teacher.getSalary()).contains(lowerCaseFilter))
-                    return true;
-                else if (Integer.toString(teacher.getBirth_year()).contains(lowerCaseFilter))
-                    return true;
-                else if (teacher.getEmail().contains(lowerCaseFilter))
-                    return true;
-                else return teacher.getPhone_number().contains(lowerCaseFilter);
-            });
-            SortedList<Teacher> sortedData = new SortedList<>(filteredData);
-
-            sortedData.comparatorProperty().bind(teacherTableView.comparatorProperty());
-
-            teacherTableView.setItems(sortedData);
-        });
-
-        searchHBox.getChildren().addAll(searchLabel, filterField);
-
-        vBox.getChildren().addAll(buttonsHBox, searchHBox);
+        vBox.getChildren().addAll(buttonsHBox);
 
         borderPane.setBottom(vBox);
-
-        borderPane.setCenter(teacherTableView);
 
         scene = new Scene(borderPane);
 
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("style.css")).toExternalForm());
-
-        scene.getRoot().addEventFilter(javafx.scene.input.MouseEvent.MOUSE_CLICKED, mouseEvent -> {
-            if (!teacherTableView.getBoundsInParent().contains(mouseEvent.getX(), mouseEvent.getY())) {
-                teacherTableView.getSelectionModel().clearSelection();
-                delete_teacher_button.setDisable(true);
-            }
-        });
 
         window.setScene(scene);
         window.show();

@@ -1,6 +1,15 @@
-package gtm.hibernateapp;
+package gtm.hibernateapp.entities;
 
+import gtm.hibernateapp.TeacherCondition;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "teachers")
 public class Teacher {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
     String name, surname;
     TeacherCondition condition;
     int birth_year;
@@ -8,15 +17,13 @@ public class Teacher {
     String phone_number;
     String email;
 
-    public Teacher(String na, String sna, TeacherCondition con, int by, double sa, String pn, String em) {
-        this.name = na;
-        this.surname = sna;
-        this.condition = con;
-        this.birth_year = by;
-        this.salary = sa;
-        this.phone_number = pn;
-        this.email = em;
-    }
+    @OneToOne
+    Group group;
+
+    public Teacher() {}
+
+    public void setId(Long id) { this.id = id; }
+
     public double getSalary() {
         return salary;
     }
@@ -73,4 +80,9 @@ public class Teacher {
         this.surname = surname;
     }
 
+    public Long getId() { return id; }
+
+    public Group getGroup() { return group; }
+
+    public void setGroup(Group group) { this.group = group; }
 }

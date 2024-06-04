@@ -1,5 +1,7 @@
 package gtm.hibernateapp;
 
+import gtm.hibernateapp.entities.Group;
+import gtm.hibernateapp.entities.Teacher;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -23,7 +25,7 @@ import static gtm.hibernateapp.TeacherCondition.*;
 
 public class AddTeacherWindow {
     static String message = "Are you sure you want to continue?";
-    public static void display(Consumer<Teacher> callback) {
+    public static void display(Group selectedGroup, Consumer<Teacher> callback) {
         Stage window = new Stage();
         window.setTitle("Add teacher");
         window.initModality(Modality.APPLICATION_MODAL);
@@ -208,7 +210,15 @@ public class AddTeacherWindow {
             String phone_number = phone_number_field.getText();
             String email = email_field.getText();
 
-            Teacher teacher = new Teacher(name, surname, condition, birth_year, salary, phone_number, email);
+            Teacher teacher = new Teacher();
+            teacher.setName(name);
+            teacher.setSurname(surname);
+            teacher.setCondition(condition);
+            teacher.setBirth_year(birth_year);
+            teacher.setPhone_number(phone_number);
+            teacher.setEmail(email);
+            teacher.setSalary(salary);
+            teacher.setGroup(selectedGroup);
             callback.accept(teacher);
             window.close();
         });

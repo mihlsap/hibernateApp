@@ -1,6 +1,6 @@
 package gtm.hibernateapp;
 
-enum TeacherCondition {
+public enum TeacherCondition {
     PRESENT{
         @Override
         public String toString() {

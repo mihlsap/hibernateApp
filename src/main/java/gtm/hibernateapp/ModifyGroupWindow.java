@@ -19,9 +19,10 @@ import java.util.function.Consumer;
 
 public class ModifyGroupWindow {
     static String message = "Are you sure you want to continue?";
+
     public static void display(Group modified_group, Consumer<Group> callback) {
         Stage window = new Stage();
-        window.setTitle("Add group");
+        window.setTitle("Modify group");
         window.initModality(Modality.APPLICATION_MODAL);
         window.setWidth(360);
         window.setHeight(160);
