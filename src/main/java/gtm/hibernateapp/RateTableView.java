@@ -40,7 +40,6 @@ public class RateTableView {
     }
 
     public void display(EntityManagerFactory entityManagerFactory, Group selectedGroup, Stage window) {
-//        Stage window = new Stage();
         window.setTitle("Rates of " + selectedGroup.getName_of_group());
         window.setResizable(false);
         window.setFullScreen(false);
