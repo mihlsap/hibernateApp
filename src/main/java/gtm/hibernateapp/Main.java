@@ -46,16 +46,34 @@ public class Main extends Application {
         List<Group> resultList = groupTypedQuery.getResultList();
 
         for (Group group : resultList) {
-            group.calculate_occupancy();
-            group.calculate_average_rate();
             Group managedGroup = entityManager.find(Group.class, group.getId());
             group.setId(managedGroup.getId());
+            group.setName_of_group(managedGroup.getName_of_group());
+            group.setMax_occupancy(managedGroup.getMax_occupancy());
+            group.setNumber_of_rates(managedGroup.getNumber_of_rates());
+
+            TypedQuery<Teacher> teacherTypedQuery = entityManager.createQuery("select t from Teacher t where t.group.id = :number", Teacher.class);
+            teacherTypedQuery.setParameter("number", group.getId());
+            List<Teacher> teachers = teacherTypedQuery.getResultList();
+            group.setNumber_of_teachers(teachers.size());
+            group.setOccupancy((double) teachers.size() / (double) group.getMax_occupancy() * 100 + " %");
+
+            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r where r.group.id = :number", Rate.class);
+            rateTypedQuery.setParameter("number", group.getId());
+            List<Rate> rates = rateTypedQuery.getResultList();
+            double average = 0;
+            for (Rate rate : rates)
+                average += rate.getValue();
+            average /= rates.size();
+            group.setAverage_rate(average);
+
             entityManager.merge(group);
         }
 
         groups.clear();
         groups.addAll(resultList);
 
+        entityManager.getTransaction().commit();
         entityManager.close();
     }
 
@@ -69,16 +87,6 @@ public class Main extends Application {
         window.setFullScreen(false);
 
         getGroups();
-
-//            // persist -> add data to the context
-//            // find -> get data from the database to the context
-//            // getReference -> get data from the database to the context ONLY when it is used afterwards
-//            // remove -> mark data for removal from the database
-//            // refresh -> reverts changes made to the object in the context by getting the data from the database and assigning it to the object
-//            // merge -> update object in the table after altering it in the context
-//            // detach -> remove data from the context, but not from database if it already exists there
-//            // flush -> mirror the context in the database, not waiting for commit
-
 
         String message = "Are you sure you want to continue?";
 
@@ -155,19 +163,7 @@ public class Main extends Application {
             teachersItem.setOnAction(actionEvent -> {
                 if(selectedGroup != null) {
                     TeacherTableView teacherTableView = new TeacherTableView();
-
-                    teacherTableView.display(selectedGroup.getItem());
-
-                    EntityManager entityManager = entityManagerFactory.createEntityManager();
-                    entityManager.getTransaction().begin();
-
-                    Group managedGroup = entityManager.find(Group.class, selectedGroup.getItem().getId());
-
-                    managedGroup.calculate_occupancy();
-                    System.out.println(managedGroup);
-
-                    entityManager.getTransaction().commit();
-                    entityManager.close();
+                    teacherTableView.display(entityManagerFactory, selectedGroup.getItem());
 
                     getGroups();
                     groupTableView.refresh();
@@ -178,18 +174,7 @@ public class Main extends Application {
             ratesItem.setOnAction(actionEvent -> {
                 if(selectedGroup != null) {
                     RateTableView rateTableView = new RateTableView();
-                    rateTableView.display(selectedGroup.getItem());
-
-                    EntityManager entityManager = entityManagerFactory.createEntityManager();
-                    entityManager.getTransaction().begin();
-
-                    Group managedGroup = entityManager.find(Group.class, selectedGroup.getItem().getId());
-
-                    managedGroup.calculate_occupancy();
-                    System.out.println(managedGroup);
-
-                    entityManager.getTransaction().commit();
-                    entityManager.close();
+                    rateTableView.display(entityManagerFactory, selectedGroup.getItem());
 
                     getGroups();
                     groupTableView.refresh();

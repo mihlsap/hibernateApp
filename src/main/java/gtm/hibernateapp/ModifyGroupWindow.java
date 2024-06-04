@@ -68,7 +68,7 @@ public class ModifyGroupWindow {
                 return;
             }
 
-            if (max_occupancy < modified_group.getTeachers().size()) {
+            if (max_occupancy < modified_group.getNumber_of_teachers()) {
                 Toolkit.getDefaultToolkit().beep();
                 AlertWindow.display("Entered maximum occupancy is invalid!");
                 return;

@@ -1,9 +1,9 @@
 package gtm.hibernateapp;
 
 import gtm.hibernateapp.entities.*;
-import gtm.hibernateapp.persistence.CustomPersistenceUnitInfo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.TypedQuery;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -17,28 +17,29 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import java.awt.*;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class RateTableView {
-
-    EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
-            CustomPersistenceUnitInfo(), new HashMap<>());
 
     Button add_rate_button, delete_rate_button, modify_rate_button;
     ObservableList<Rate> rates = FXCollections.observableArrayList();
     TableView<Rate> rateTableView = new TableView<>(rates);
 
-    public void getRateList (Group selectedGroup) {
+    public void getRateList (EntityManagerFactory entityManagerFactory, Group selectedGroup) {
         rates.clear();
-        rates.addAll(selectedGroup.getRates());
+
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r where r.group.id = :number", Rate.class);
+        rateTypedQuery.setParameter("number", selectedGroup.getId());
+        rates.addAll(rateTypedQuery.getResultList());
+        entityManager.close();
     }
 
-    public void display(Group selectedGroup) {
+    public void display(EntityManagerFactory entityManagerFactory, Group selectedGroup) {
         Stage window = new Stage();
         window.setTitle("Rates of " + selectedGroup.getName_of_group());
         window.setResizable(false);
@@ -50,12 +51,11 @@ public class RateTableView {
             Toolkit.getDefaultToolkit().beep();
             if (!ConfirmationWindow.display(message))
                 windowEvent.consume();
-            entityManagerFactory.close();
         });
 
         BorderPane borderPane = new BorderPane();
 
-        getRateList(selectedGroup);
+        getRateList(entityManagerFactory, selectedGroup);
 
         TableColumn<Rate, Double> value_column = new TableColumn<>("Value");
         value_column.setMinWidth(120);
@@ -102,7 +102,7 @@ public class RateTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getRateList(selectedGroup);
+                getRateList(entityManagerFactory, selectedGroup);
                 rateTableView.refresh();
             });
         });
@@ -122,7 +122,7 @@ public class RateTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getRateList(selectedGroup);
+                getRateList(entityManagerFactory, selectedGroup);
                 rateTableView.refresh();
             }
         });
@@ -149,7 +149,7 @@ public class RateTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getRateList(selectedGroup);
+                getRateList(entityManagerFactory, selectedGroup);
                 rateTableView.refresh();
             });
         });

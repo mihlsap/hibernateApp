@@ -1,11 +1,6 @@
 package gtm.hibernateapp.entities;
 
-import gtm.hibernateapp.persistence.CustomPersistenceUnitInfo;
 import jakarta.persistence.*;
-import org.hibernate.jpa.HibernatePersistenceProvider;
-
-import java.util.HashMap;
-import java.util.List;
 
 @Entity
 @Table(name = "groups")
@@ -19,6 +14,8 @@ public class Group {
     String occupancy;
     int number_of_rates;
     double average_rate;
+    @Transient
+    int number_of_teachers;
 
     public String getOccupancy() {
         return occupancy;
@@ -26,6 +23,14 @@ public class Group {
 
     public void setOccupancy(String occupancy) {
         this.occupancy = occupancy;
+    }
+
+    public int getNumber_of_teachers() {
+        return number_of_teachers;
+    }
+
+    public void setNumber_of_teachers(int number_of_teachers) {
+        this.number_of_teachers = number_of_teachers;
     }
 
     public void setId(Long id) {
@@ -50,74 +55,6 @@ public class Group {
 
     public void setAverage_rate(double average_rate) {
         this.average_rate = average_rate;
-    }
-
-    public List<Teacher> getTeachers () {
-        EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
-                CustomPersistenceUnitInfo(), new HashMap<>());
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        List<Teacher> teachers;
-        try {
-            entityManager.getTransaction().begin();
-
-            TypedQuery<Teacher> teacherTypedQuery = entityManager.createQuery("select t from Teacher t where t.group.id = :number", Teacher.class);
-            teacherTypedQuery.setParameter("number", getId());
-            teachers = teacherTypedQuery.getResultList();
-        }
-        finally {
-            entityManager.close();
-            entityManagerFactory.close();
-        }
-
-        return teachers;
-    }
-
-    public List<Rate> getRates () {
-        EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
-                CustomPersistenceUnitInfo(), new HashMap<>());
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        List<Rate> rates;
-        try {
-            entityManager.getTransaction().begin();
-
-            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r where r.group.id = :number", Rate.class);
-            rateTypedQuery.setParameter("number", getId());
-            rates = rateTypedQuery.getResultList();
-        }
-        finally {
-            entityManager.close();
-            entityManagerFactory.close();
-        }
-
-        return rates;
-    }
-
-    public void calculate_average_rate() {
-        double average = 0;
-        List<Rate> rates = getRates();
-
-        for (Rate rate : rates)
-            average += rate.value;
-        average /= rates.size();
-
-        average_rate = average;
-    }
-
-    public void calculate_occupancy() {
-        List<Teacher> teachers = getTeachers();
-        occupancy = (double) teachers.size() / (double) max_occupancy * 100 + " %";
-    }
-
-    @Override
-    public String toString() {
-        return "GroupEntity{" +
-                "id=" + id +
-                ", name_of_group='" + name_of_group + '\'' +
-                ", max_occupancy=" + max_occupancy +
-                ", occupancy='" + occupancy + '\'' +
-                ", number_of_rates=" + number_of_rates +
-                ", average_rate=" + average_rate +
-                '}';
     }
 
     public int getMax_occupancy() {

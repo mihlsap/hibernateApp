@@ -1,9 +1,9 @@
 package gtm.hibernateapp;
 
 import gtm.hibernateapp.entities.*;
-import gtm.hibernateapp.persistence.CustomPersistenceUnitInfo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.TypedQuery;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -20,27 +20,30 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import java.awt.*;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class TeacherTableView {
-
-    EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
-            CustomPersistenceUnitInfo(), new HashMap<>());
 
     Button add_teacher_button, delete_teacher_button, modify_teachers_data_button;
     ObservableList<Teacher> teachers = FXCollections.observableArrayList();
     TableView<Teacher> teacherTableView = new TableView<>(teachers);
 
-    public void getTeachersList (Group selectedGroup) {
+    public void getTeachersList (EntityManagerFactory entityManagerFactory, Group selectedGroup) {
         teachers.clear();
-        teachers.addAll(selectedGroup.getTeachers());
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entityManager.getTransaction().begin();
+        TypedQuery<Teacher> teacherTypedQuery = entityManager.createQuery("select t from Teacher t where t.group.id = :number", Teacher.class);
+        teacherTypedQuery.setParameter("number", selectedGroup.getId());
+        List<Teacher> teachersQueryResult = teacherTypedQuery.getResultList();
+        entityManager.close();
+
+        teachers.addAll(teachersQueryResult);
     }
 
-    public void display(Group selectedGroup) {
+    public void display(EntityManagerFactory entityManagerFactory, Group selectedGroup) {
         Stage window = new Stage();
         window.setTitle("Teachers in " + selectedGroup.getName_of_group());
         window.setResizable(false);
@@ -52,12 +55,11 @@ public class TeacherTableView {
             Toolkit.getDefaultToolkit().beep();
             if (!ConfirmationWindow.display(message))
                 windowEvent.consume();
-            entityManagerFactory.close();
         });
 
         BorderPane borderPane = new BorderPane();
 
-        getTeachersList(selectedGroup);
+        getTeachersList(entityManagerFactory, selectedGroup);
 
         TableColumn<Teacher, String> name_column = new TableColumn<>("Name");
         name_column.setMinWidth(120);
@@ -113,7 +115,7 @@ public class TeacherTableView {
         });
 
         add_teacher_button.setOnAction(actionEvent -> {
-            if (selectedGroup.getTeachers().size() == selectedGroup.getMax_occupancy()) {
+            if (teachers.size() == selectedGroup.getMax_occupancy()) {
                 Toolkit.getDefaultToolkit().beep();
                 AlertWindow.display("Maximum occupancy of a group has been reached!");
                 actionEvent.consume();
@@ -127,7 +129,7 @@ public class TeacherTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getTeachersList(selectedGroup);
+                getTeachersList(entityManagerFactory, selectedGroup);
                 teacherTableView.refresh();
             });
         });
@@ -147,7 +149,7 @@ public class TeacherTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getTeachersList(selectedGroup);
+                getTeachersList(entityManagerFactory, selectedGroup);
                 teacherTableView.refresh();
             }
         });
@@ -174,7 +176,7 @@ public class TeacherTableView {
                 entityManager.getTransaction().commit();
                 entityManager.close();
 
-                getTeachersList(selectedGroup);
+                getTeachersList(entityManagerFactory, selectedGroup);
                 teacherTableView.refresh();
             });
         });
