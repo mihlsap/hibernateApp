@@ -9,7 +9,7 @@ import java.time.LocalDate;
 public class Rate {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // maybe UUID?? or UUID on front and IDENTITY on back
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     Double value;
     LocalDate date;

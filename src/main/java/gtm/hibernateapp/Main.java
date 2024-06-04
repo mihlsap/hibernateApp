@@ -50,7 +50,6 @@ public class Main extends Application {
             group.setId(managedGroup.getId());
             group.setName_of_group(managedGroup.getName_of_group());
             group.setMax_occupancy(managedGroup.getMax_occupancy());
-            group.setNumber_of_rates(managedGroup.getNumber_of_rates());
 
             TypedQuery<Teacher> teacherTypedQuery = entityManager.createQuery("select t from Teacher t where t.group.id = :number", Teacher.class);
             teacherTypedQuery.setParameter("number", group.getId());
@@ -66,6 +65,8 @@ public class Main extends Application {
                 average += rate.getValue();
             average /= rates.size();
             group.setAverage_rate(average);
+
+            group.setNumber_of_rates(rates.size());
 
             entityManager.merge(group);
         }

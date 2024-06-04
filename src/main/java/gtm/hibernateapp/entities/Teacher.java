@@ -22,7 +22,9 @@ public class Teacher {
 
     public Teacher() {}
 
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public double getSalary() {
         return salary;
@@ -80,9 +82,15 @@ public class Teacher {
         this.surname = surname;
     }
 
-    public Long getId() { return id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Group getGroup() { return group; }
+    public Group getGroup() {
+        return group;
+    }
 
-    public void setGroup(Group group) { this.group = group; }
+    public void setGroup(Group group) {
+        this.group = group;
+    }
 }
