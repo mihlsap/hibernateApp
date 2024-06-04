@@ -157,37 +157,6 @@ public class Main extends Application {
             }
         });
 
-        groupTableView.setRowFactory(tableView -> {
-            TableRow<Group> selectedGroup = new TableRow<>();
-
-            MenuItem teachersItem = new MenuItem("Manage teachers");
-            teachersItem.setOnAction(actionEvent -> {
-                if(selectedGroup != null) {
-                    TeacherTableView teacherTableView = new TeacherTableView();
-                    teacherTableView.display(entityManagerFactory, selectedGroup.getItem());
-
-                    getGroups();
-                    groupTableView.refresh();
-                }
-            });
-
-            MenuItem ratesItem = new MenuItem("Manage rates");
-            ratesItem.setOnAction(actionEvent -> {
-                if(selectedGroup != null) {
-                    RateTableView rateTableView = new RateTableView();
-                    rateTableView.display(entityManagerFactory, selectedGroup.getItem());
-
-                    getGroups();
-                    groupTableView.refresh();
-                }
-            });
-
-            ContextMenu contextMenu = new ContextMenu(teachersItem, ratesItem);
-
-            selectedGroup.contextMenuProperty().bind(Bindings.when(selectedGroup.emptyProperty()).then((ContextMenu) null).otherwise(contextMenu));
-            return selectedGroup;
-        });
-
         delete_group_button.setOnAction(actionEvent -> {
             Toolkit.getDefaultToolkit().beep();
             if (!ConfirmationWindow.display(message)) {
@@ -233,6 +202,37 @@ public class Main extends Application {
                 });
             }
 
+        });
+
+        groupTableView.setRowFactory(tableView -> {
+            TableRow<Group> selectedGroup = new TableRow<>();
+
+            MenuItem teachersItem = new MenuItem("Manage teachers");
+            teachersItem.setOnAction(actionEvent -> {
+                TeacherTableView teacherTableView = new TeacherTableView();
+                Stage window = new Stage();
+                teacherTableView.display(entityManagerFactory, selectedGroup.getItem(), window);
+                window.setOnCloseRequest(windowEvent -> {
+                    getGroups();
+                    groupTableView.refresh();
+                });
+            });
+
+            MenuItem ratesItem = new MenuItem("Manage rates");
+            ratesItem.setOnAction(actionEvent -> {
+                RateTableView rateTableView = new RateTableView();
+                Stage window = new Stage();
+                rateTableView.display(entityManagerFactory, selectedGroup.getItem(), window);
+                window.setOnCloseRequest(windowEvent -> {
+                    getGroups();
+                    groupTableView.refresh();
+                });
+            });
+
+            ContextMenu contextMenu = new ContextMenu(teachersItem, ratesItem);
+
+            selectedGroup.contextMenuProperty().bind(Bindings.when(selectedGroup.emptyProperty()).then((ContextMenu) null).otherwise(contextMenu));
+            return selectedGroup;
         });
 
         borderPane.setPadding(new Insets(10, 10, 10, 10));

@@ -43,8 +43,8 @@ public class TeacherTableView {
         teachers.addAll(teachersQueryResult);
     }
 
-    public void display(EntityManagerFactory entityManagerFactory, Group selectedGroup) {
-        Stage window = new Stage();
+    public void display(EntityManagerFactory entityManagerFactory, Group selectedGroup, Stage window) {
+//        Stage window = new Stage();
         window.setTitle("Teachers in " + selectedGroup.getName_of_group());
         window.setResizable(false);
         window.setFullScreen(false);
