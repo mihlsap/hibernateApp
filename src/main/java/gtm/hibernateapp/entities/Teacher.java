@@ -93,4 +93,19 @@ public class Teacher {
     public void setGroup(Group group) {
         this.group = group;
     }
+
+    @Override
+    public String toString() {
+        return "Teacher{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", condition=" + condition +
+                ", birth_year=" + birth_year +
+                ", salary=" + salary +
+                ", phone_number='" + phone_number + '\'' +
+                ", email='" + email + '\'' +
+                ", group=" + group +
+                '}';
+    }
 }

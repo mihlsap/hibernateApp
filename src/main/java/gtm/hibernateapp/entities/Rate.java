@@ -58,4 +58,14 @@ public class Rate {
         this.group = group;
     }
 
+    @Override
+    public String toString() {
+        return "Rate{" +
+                "id=" + id +
+                ", value=" + value +
+                ", date=" + date +
+                ", comment='" + comment + '\'' +
+                ", group=" + group +
+                '}';
+    }
 }

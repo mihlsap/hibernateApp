@@ -23,16 +23,21 @@ import javafx.stage.Stage;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import java.awt.*;
-import java.util.HashMap;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 
 public class Main extends Application {
 
     EntityManagerFactory entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(new
             CustomPersistenceUnitInfo(), new HashMap<>());
 
-    Button add_group_button, delete_group_button, modify_group_data_button;
+    Button add_group_button, delete_group_button, modify_group_data_button, export_data_button;
     Stage window;
     Scene scene;
     ObservableList<Group> groups = FXCollections.observableArrayList();
@@ -95,6 +100,46 @@ public class Main extends Application {
             Toolkit.getDefaultToolkit().beep();
             if (!ConfirmationWindow.display(message))
                 windowEvent.consume();
+            EntityManager entityManager = entityManagerFactory.createEntityManager();
+            TypedQuery<Group> groupTypedQuery = entityManager.createQuery("select g from Group g", Group.class);
+            List<Group> groupResultList = groupTypedQuery.getResultList();
+            TypedQuery<Teacher> teachersTypedQuery = entityManager.createQuery("select t from Teacher t", Teacher.class);
+            List<Teacher> teachersResultList = teachersTypedQuery.getResultList();
+            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r", Rate.class);
+            List<Rate> rateResultList = rateTypedQuery.getResultList();
+            entityManager.close();
+
+            LocalDateTime date = LocalDateTime.now();
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh-mm-ssa");
+
+            String formattedDate = date.format(dateFormatter);
+            String formattedTime = date.format(timeFormatter);
+
+            String filename = "groups_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\groups\\" + filename)))) {
+                for (Group group : groupResultList) {
+                    writer.println(group.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            filename = "teachers_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\teachers\\" + filename)))) {
+                for (Teacher teacher : teachersResultList) {
+                    writer.println(teacher.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            filename = "rates_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\rates\\" + filename)))) {
+                for (Rate rate : rateResultList) {
+                    writer.println(rate.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             entityManagerFactory.close();
         });
 
@@ -146,6 +191,10 @@ public class Main extends Application {
         modify_group_data_button.setText("Modify group's data");
         modify_group_data_button.getStyleClass().add("groups_buttons");
         modify_group_data_button.setDisable(true);
+
+        export_data_button = new Button();
+        export_data_button.setText("Export data");
+        export_data_button.getStyleClass().add("export_button");
 
         groupTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -235,13 +284,61 @@ public class Main extends Application {
             return selectedGroup;
         });
 
+        export_data_button.setOnAction(actionEvent -> {
+            Toolkit.getDefaultToolkit().beep();
+            if (!ConfirmationWindow.display(message)) {
+                actionEvent.consume();
+                return;
+            }
+            EntityManager entityManager = entityManagerFactory.createEntityManager();
+            TypedQuery<Group> groupTypedQuery = entityManager.createQuery("select g from Group g", Group.class);
+            List<Group> groupResultList = groupTypedQuery.getResultList();
+            TypedQuery<Teacher> teachersTypedQuery = entityManager.createQuery("select t from Teacher t", Teacher.class);
+            List<Teacher> teachersResultList = teachersTypedQuery.getResultList();
+            TypedQuery<Rate> rateTypedQuery = entityManager.createQuery("select r from Rate r", Rate.class);
+            List<Rate> rateResultList = rateTypedQuery.getResultList();
+            entityManager.close();
+
+            LocalDateTime date = LocalDateTime.now();
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh-mm-ssa");
+
+            String formattedDate = date.format(dateFormatter);
+            String formattedTime = date.format(timeFormatter);
+
+            String filename = "groups_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\groups\\" + filename)))) {
+                for (Group group : groupResultList) {
+                    writer.println(group.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            filename = "teachers_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\teachers\\" + filename)))) {
+                for (Teacher teacher : teachersResultList) {
+                    writer.println(teacher.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            filename = "rates_" + formattedDate + "_" + formattedTime + ".csv";
+            try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Dell\\Desktop\\stuff\\studia\\semestr 4\\Programowanie aplikacji użytkowych\\hibernateApp\\src\\main\\resources\\logs\\rates\\" + filename)))) {
+                for (Rate rate : rateResultList) {
+                    writer.println(rate.toString());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         borderPane.setPadding(new Insets(10, 10, 10, 10));
         borderPane.setLeft(groupTableView);
 
         VBox vBox = new VBox(10);
 
         HBox buttonsHBox = new HBox(20);
-        buttonsHBox.getChildren().addAll(add_group_button, delete_group_button, modify_group_data_button);
+        buttonsHBox.getChildren().addAll(add_group_button, delete_group_button, modify_group_data_button, export_data_button);
 
         vBox.getChildren().addAll(buttonsHBox);
 

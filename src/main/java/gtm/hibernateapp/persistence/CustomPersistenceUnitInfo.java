@@ -43,6 +43,8 @@ public class CustomPersistenceUnitInfo implements PersistenceUnitInfo {
         dataSource.setJdbcUrl("jdbc:postgresql://localhost:5432/postgres");
         dataSource.setUsername("postgres");
         dataSource.setPassword("root");
+        dataSource.setConnectionTimeout(5000);
+        dataSource.setMaximumPoolSize(10000);
         return dataSource;
     }
 

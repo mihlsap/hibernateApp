@@ -17,3 +17,7 @@
     -fx-background-color: darkblue;
     -fx-text-fill: white;
 }
+.export_button{
+    -fx-background-color: #C2366E;
+    -fx-text-fill: white;
+}

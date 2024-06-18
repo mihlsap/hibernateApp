@@ -72,4 +72,17 @@ public class Group {
     public void setName_of_group(String name_of_group) {
         this.name_of_group = name_of_group;
     }
+
+    @Override
+    public String toString() {
+        return "Group{" +
+                "id=" + id +
+                ", name_of_group='" + name_of_group + '\'' +
+                ", max_occupancy=" + max_occupancy +
+                ", occupancy='" + occupancy + '\'' +
+                ", number_of_rates=" + number_of_rates +
+                ", average_rate=" + average_rate +
+                ", number_of_teachers=" + number_of_teachers +
+                '}';
+    }
 }
